@@ -1,0 +1,143 @@
+system:
+  app_name: "Fraudvestigate"
+  version: "1.0"
+  domain: "Financial Fraud Detection"
+
+llm:
+  provider: "openai"
+  model_name: "gpt-4o-mini"
+  temperature: 0
+
+embeddings:
+  provider: "ollama"
+  model_name: "qwen3-embedding:0.6b"
+
+database:
+  uri: "postgresql://postgres:111@localhost:5432/postgres"
+  table_name: "TRXFraud"
+
+files:
+  pdf_path: "C:\\Users\\kevin\\Documents\\Projects\\Fraudvestigate\\Dataset\\Understanding Credit Card Frauds.pdf"
+  chroma_db_path: "./chroma_db"
+
+prompts:
+  # ==========================================
+  # MASTER ROUTER
+  # ==========================================
+  router_system: |
+    You are a Fraud Analysis Assistant with access to two specialized tools:
+    
+    1. 'sql_analysis_tool': Use this for questions about transaction counts, specific fraud cases, trends over time, or quantitative data stored in the 'TRXFraud' database.
+       - Keywords: "how many", "count", "transactions", "highest fraud", "fluctuation", "total value", "statistics".
+       
+    2. 'policy_rag_tool': Use this for questions about fraud detection techniques, policies, definitions, qualitative descriptions, or interpreting charts/graphs from the PDF.
+       - Keywords: "methods", "indicators", "techniques", "policy", "what is", "explain", "chart", "graph".
+       
+    Analyze the user's question and choose the correct tool. Do not guess.
+
+  # ==========================================
+  # TOOL 1: SQL CHAIN
+  # ==========================================
+  
+  # Used inside 'get_fraud_context'
+  sql_context_enrichment: |
+    Schema:
+    {schema}
+    
+    Available 'category' values: {categories}
+    
+    Important Notes:
+    - Table name is 'TRXFraud'.
+    - 'is_fraud' is 1 for fraud, 0 for legitimate.
+    - 'transaction_amount' is the column for money/value.
+    - 'trans_date_trans_time' is the timestamp.
+    - When asked for "Fluctuation", aggregate by DATE_TRUNC('month', trans_date_trans_time) or 'day'.
+    - **CRITICAL: When using GROUP BY, always SELECT the COUNT(*) or SUM() column so the values are visible.**
+
+  # Main SQL generation prompt
+  sql_generation: |
+    You are a PostgreSQL expert.
+    Given an input question, create a syntactically correct PostgreSQL query to run.
+
+    **CRITICAL RULES:**
+    1. **Table Name:** You MUST wrap the table name in double quotes: "TRXFraud".
+    2. **Schema Only:** Use ONLY the columns listed in the schema below.
+    3. **No Hallucinations:** If the user asks for data that is NOT in the schema (e.g. "cross-border", "country", "merchant_state"), do NOT guess. Return exactly:
+       SELECT 'N/A' AS result;
+    4. **Fraud Logic:** 'is_fraud' is 1 (fraud) and 0 (legitimate).
+
+    **Schema:**
+    {schema}
+
+    Question: {question}
+    SQL Query:
+
+  # Final natural language response prompt
+  sql_response: |
+    Based on the question, the SQL query generated, and the database response, write a natural language answer.
+
+    Question: {question}
+    SQL Query: {query}
+    SQL Response: {response}
+
+    If the response is empty, say "I couldn't find any data matching that request."
+    Answer:
+
+  # ==========================================
+  # TOOL 2: RAG AGENT
+  # ==========================================
+
+  rag_retrieval_grader: |
+    You are a grader assessing the relevance of a retrieved document to a user question. 
+    
+    Here is the retrieved document: 
+    {document} 
+
+    Here is the user question: {question} 
+    
+    If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant. 
+    Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question. 
+    Provide the binary score as a JSON with a single key 'score' and no premable or explanation.
+
+  rag_hallucination_grader: |
+    You are a grader assessing whether an answer is grounded in / supported by a set of facts. 
+    
+    Here are the facts:
+    ------- 
+    {documents} 
+    ------- 
+    
+    Here is the answer: {generation}
+    
+    Give a binary score 'yes' or 'no' score to indicate whether the answer is grounded in / supported by a set of facts. 
+    Provide the binary score as a JSON with a single key 'score' and no preamble or explanation.
+
+  rag_answer_grader: |
+    You are a grader assessing whether an answer addresses / resolves a question 
+    
+    Here is the user question: {question} 
+    Here is the answer: {generation} 
+    
+    Give a binary score 'yes' or 'no' score to indicate whether the answer resolves the question. 
+    Provide the binary score as a JSON with a single key 'score' and no preamble or explanation.
+
+  rag_question_rewriter: |
+    You a question re-writer that converts an input question to a better version that is optimized 
+    for vectorstore retrieval. Look at the initial and formulate an improved question. 
+    
+    Here is the initial question: {question} 
+    
+    Formulate an improved question with no preamble or explanation.
+
+  rag_generation: |
+    You are an assistant for question-answering tasks. 
+    Use the following pieces of retrieved context to answer the question. 
+    If you don't know the answer, just say that you don't know. 
+    Use three sentences maximum and keep the answer concise.
+    
+    IMPORTANT: Provide ONLY the final answer. Do not show your internal thought process, reasoning steps, or <think> tags.
+    
+    Question: {question} 
+    Context: {context} 
+    
+    Answer:

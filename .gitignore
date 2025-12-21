@@ -1,0 +1,3 @@
+.env
+Dataset/
+chroma_db/
