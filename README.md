@@ -1,5 +1,7 @@
 # Fraudvestigate
 
+https://github.com/user-attachments/assets/6bbfecf9-4042-4faa-ade4-b463fbfe58fa
+
 ### Project Overview
 This project implements a hybrid LLM agent system for analyzing credit card fraud data. It combines structured database querying with unstructured knowledge retrieval, controlled by an intelligent router.
 
