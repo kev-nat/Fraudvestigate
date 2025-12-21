@@ -17,16 +17,16 @@ The system uses **PostgreSQL** database for structured transaction data and **Ch
 **1. Prerequisites (Ollama & Dependencies)**
 This project uses local models for embeddings. You must install Ollama and pull the required models.
 
-   1. **Install Ollama**  
+   - **Install Ollama**  
       Download from [**Ollama**](https://ollama.com).
 
-   2. **Pull Models**  
+   - **Pull Models**  
       Open your terminal and run:
       ```bash
       ollama pull qwen3-embedding:0.6b
       ```
 
-   3. **Install Dependencies**  
+   - **Install Dependencies**  
       ```bash
       pip install -r requirements.txt
       ```
@@ -104,12 +104,12 @@ This module handles unstructured queries (knowledge base) using an Active RAG ar
 1. **Retrieval:** Fetches documents from ChromaDB based on the user query.
 
 2. **Grading (The "Judge"):** The agent evaluates the retrieved documents for relevance.
-- *Is this document actually related to the question?*
+   - *Is this document actually related to the question?*
 
 3. **Conditional Logic:**
-- **If Relevant:** It proceeds to generate an answer.
-- **If Irrelevant:** It triggers a **Query Transformation**. The agent rewrites the user's search query to be more effective and tries retrieving again rather than hallucinating an answer.
-- **Final Generation:** Synthesizes the answer only using verified, high-quality context.
+   - **If Relevant:** It proceeds to generate an answer.
+   - **If Irrelevant:** It triggers a **Query Transformation**. The agent rewrites the user's search query to be more effective and tries retrieving again rather than hallucinating an answer.
+   - **Final Generation:** Synthesizes the answer only using verified, high-quality context.
 
 ### Part 3: Master Router
 This is the "Traffic Controller" of the system.
@@ -125,13 +125,12 @@ This is the "Traffic Controller" of the system.
 
 ### Caching & Configuration
 
-**Building the Vector Database** (`build_db.py`)
-Before running the app, run this script once to ingest the knowledge base. It creates embeddings and persists them to a local `chroma_db` folder, acting as a cache to prevent re-indexing on every restart.
+**Building the Vector Database** (`build_db.py`): Before running the app, run this script once to ingest the knowledge base. It creates embeddings and persists them to a local `chroma_db` folder, acting as a cache to prevent re-indexing on every restart.
 
-**Configuration** (`config.yaml`)
-All system parameters are centralized here for easy debugging and model swapping.
 
-- **Model Names:**
+**Configuration** (`config.yaml`): All system parameters are centralized here for easy debugging and model swapping.
+
+- **Model:**
     * LLM: `gpt-4o-mini`
     * Embeddings: `qwen3-embedding:0.6b`
 - **Database Connection:** Host, port, and credentials
