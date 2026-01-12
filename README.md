@@ -11,7 +11,7 @@ This project implements a hybrid LLM agent system for analyzing credit card frau
 
 3. **Master Router:** An intelligent classifier that directs user queries to the correct tool.
 
-The system uses **PostgreSQL** database for structured transaction data and **ChromaDB** for vector storage, orchestrated via a Streamlit UI.
+The system uses **PostgreSQL** database for structured transaction data and **ChromaDB** for vector storage, orchestrated via Streamlit.
 
 --------
 
